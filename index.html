@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Parser</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px;
+        }
+
+        #output {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>JSON Parser</h1>
+    <label for="jsonInput">Enter JSON:</label>
+    <textarea id="jsonInput"></textarea>
+    <button onclick="parseJson()">Parse</button>
+    <div id="output"></div>
+
+    <script>
+        function parseJson() {
+            const jsonInput = document.getElementById('jsonInput').value;
+            const outputDiv = document.getElementById('output');
+
+            try {
+                const result = parseJsonData(jsonInput);
+                if (result[0] !== null && result[1] !== null) {
+                    outputDiv.textContent = `Name: ${result[0]}, Model: ${result[1]}`;
+                } else {
+                    outputDiv.textContent = 'Invalid JSON format or missing required fields.';
+                }
+            } catch (error) {
+                outputDiv.textContent = 'Error parsing JSON.';
+            }
+        }
+
+function parseJsonData(jsonStr) {
+    try {
+        // Replace single quotes with double quotes and parse JSON
+        const data = JSON.parse(jsonStr.replace(/'/g, '"'));
+
+        if ('name' in data && 'kwargs' in data && data['kwargs']['model']) {
+            const name = data['name'];
+            const model = data['kwargs']['model'];
+
+            // Extract values without relying on regular expressions
+            const extractedName = name.replace(/['"]/g, '');
+            const extractedModel = model.replace(/{{\s*get_where_subquery\(\s*ref\(\s*['"]([^'"]+?)['"]\s*\)\s*\)}}/, '$1');
+
+            return [extractedName, extractedModel];
+        }
+    } catch (error) {
+        // Handle JSON parsing errors
+    }
+
+    return [null, null];
+}
+
+    </script>
+</body>
+
+</html>

@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Parser</title>
+    <title>Formatted and Styled Parser with Column Name</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +12,7 @@
 
         textarea {
             width: 100%;
-            height: 100px;
+            height: 200px;
             margin-bottom: 10px;
         }
 
@@ -21,59 +20,97 @@
             padding: 10px;
         }
 
-        #output {
+        .results-header {
             margin-top: 20px;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .results-table th,
+        .results-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .results-table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .results-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .results-table tr:hover {
+            background-color: #ddd;
+        }
+
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
         }
     </style>
 </head>
-
 <body>
-    <h1>JSON Parser</h1>
-    <label for="jsonInput">Enter JSON:</label>
-    <textarea id="jsonInput"></textarea>
-    <button onclick="parseJson()">Parse</button>
-    <div id="output"></div>
+    <h1>Custom Formatter</h1>
+    <!-- Code Snippet Section -->
+    <div>
+        <h2>Code Snippet:</h2>
+        <pre>
+{% for node in graph.nodes.values() | selectattr("resource_type", "equalto", "test") %}
+ {{ node.test_metadata }}
+{% endfor %}
+        </pre>
+    </div>
+    <label for="textInput">Enter Text:</label>
+    <textarea id="textInput"></textarea>
+    <button onclick="parseText()">Parse</button>
+    
+    <div class="results-header">Results</div>
+    <table class="results-table" id="resultsTable">
+        <thead>
+            <tr>
+                <th>Test Name</th>
+                <th>Model Name</th>
+                <th>Column Name</th> <!-- Added Column Name Header -->
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Results will go here -->
+        </tbody>
+    </table>
 
     <script>
-        function parseJson() {
-            const jsonInput = document.getElementById('jsonInput').value;
-            const outputDiv = document.getElementById('output');
-
-            try {
-                const result = parseJsonData(jsonInput);
-                if (result[0] !== null && result[1] !== null) {
-                    outputDiv.textContent = `Name: ${result[0]}, Model: ${result[1]}`;
-                } else {
-                    outputDiv.textContent = 'Invalid JSON format or missing required fields.';
+        function parseText() {
+            const textInput = document.getElementById('textInput').value;
+            const resultsTable = document.getElementById('resultsTable').getElementsByTagName('tbody')[0];
+            resultsTable.innerHTML = ''; // Clear previous results
+            const blocks = textInput.split('\n\n'); // Assuming each block is separated by a blank line
+            
+            blocks.forEach(block => {
+                const nameMatch = block.match(/'name':\s*'([^']+)'/);
+                const modelMatch = block.match(/ref\('([^']+)'\)/);
+                const columnNameMatch = block.match(/'column_name':\s*'([^']+)'/); // Extract column_name
+                if (nameMatch && modelMatch && columnNameMatch) {
+                    const row = resultsTable.insertRow();
+                    const testNameCell = row.insertCell(0);
+                    const modelNameCell = row.insertCell(1);
+                    const columnNameCell = row.insertCell(2); // New cell for Column Name
+                    testNameCell.textContent = nameMatch[1];
+                    modelNameCell.textContent = modelMatch[1];
+                    columnNameCell.textContent = columnNameMatch[1]; // Set Column Name
                 }
-            } catch (error) {
-                outputDiv.textContent = 'Error parsing JSON.';
-            }
+            });
         }
-
-function parseJsonData(jsonStr) {
-    try {
-        // Replace single quotes with double quotes and parse JSON
-        const data = JSON.parse(jsonStr.replace(/'/g, '"'));
-
-        if ('name' in data && 'kwargs' in data && data['kwargs']['model']) {
-            const name = data['name'];
-            const model = data['kwargs']['model'];
-
-            // Extract values without relying on regular expressions
-            const extractedName = name.replace(/['"]/g, '');
-            const extractedModel = model.replace(/{{\s*get_where_subquery\(\s*ref\(\s*['"]([^'"]+?)['"]\s*\)\s*\)}}/, '$1');
-
-            return [extractedName, extractedModel];
-        }
-    } catch (error) {
-        // Handle JSON parsing errors
-    }
-
-    return [null, null];
-}
-
     </script>
 </body>
-
 </html>
